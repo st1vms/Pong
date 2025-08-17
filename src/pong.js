@@ -6,6 +6,8 @@ const canvasHeight = gameCanvas.height;
 
 const canvasColor = "#0d1117";
 
+const winningScore = 10;
+
 // Common player properties
 const paddleWidth = 10;
 const paddleHeight = 75;
@@ -51,12 +53,12 @@ let playerTwoPaddle = {
 };
 
 // W-S
-const playerOneUpKeyCode = 87;
-const playerOneDownKeyCode = 83;
+const playerOneUpKeyCode = "KeyW";
+const playerOneDownKeyCode = "KeyS";
 
 // Up-Down keys
-const playerTwoUpKeyCode = 38;
-const playerTwoDownKeyCode = 40;
+const playerTwoUpKeyCode = "ArrowUp";
+const playerTwoDownKeyCode = "ArrowDown";
 
 let playerOneMovingUp = false;
 let playerOneMovingDown = false;
@@ -68,47 +70,67 @@ let playerTwoMovingDown = false;
 const tickRateMs = 10;
 let intervalID;
 
-function onKeyPressed(event) {
-	const keyPressed = event.keyCode;
-
-	switch (keyPressed) {
+function onKeyPressed(
+	keyCode,
+	player_one_active = true,
+	player_two_active = true
+) {
+	switch (keyCode) {
 		case playerOneUpKeyCode: {
-			playerOneMovingUp = true;
+			if (player_one_active) {
+				playerOneMovingUp = true;
+			}
 			break;
 		}
 		case playerOneDownKeyCode: {
-			playerOneMovingDown = true;
+			if (player_one_active) {
+				playerOneMovingDown = true;
+			}
 			break;
 		}
 		case playerTwoUpKeyCode: {
-			playerTwoMovingUp = true;
+			if (player_two_active) {
+				playerTwoMovingUp = true;
+			}
 			break;
 		}
 		case playerTwoDownKeyCode: {
-			playerTwoMovingDown = true;
+			if (player_two_active) {
+				playerTwoMovingDown = true;
+			}
 			break;
 		}
 	}
 }
 
-function onKeyReleased(event) {
-	const keyReleased = event.keyCode;
-
-	switch (keyReleased) {
+function onKeyReleased(
+	keyCode,
+	player_one_active = true,
+	player_two_active = true
+) {
+	switch (keyCode) {
 		case playerOneUpKeyCode: {
-			playerOneMovingUp = false;
+			if (player_one_active) {
+				playerOneMovingUp = false;
+			}
 			break;
 		}
 		case playerOneDownKeyCode: {
-			playerOneMovingDown = false;
+			if (player_one_active) {
+				playerOneMovingDown = false;
+			}
 			break;
 		}
 		case playerTwoUpKeyCode: {
-			playerTwoMovingUp = false;
+			if (player_two_active) {
+				playerTwoMovingUp = false;
+			}
 			break;
 		}
 		case playerTwoDownKeyCode: {
-			playerTwoMovingDown = false;
+			if (player_two_active) {
+				playerTwoMovingDown = false;
+			}
 			break;
 		}
 	}
@@ -200,7 +222,7 @@ function clearBoard() {
 	context.fillRect(0, 0, canvasWidth, canvasHeight);
 }
 
-function drawPaddles() {
+function calculatePlayerMovement() {
 	// Calculate player one movement
 	if (playerOneMovingUp && playerOnePaddle.y > 0) {
 		playerOnePaddle.y -= paddleSpeed;
@@ -224,7 +246,9 @@ function drawPaddles() {
 	) {
 		playerTwoPaddle.y += paddleSpeed;
 	}
+}
 
+function drawPaddles() {
 	// Draw player one
 	context.fillStyle = paddleColor;
 	context.fillRect(
@@ -264,8 +288,6 @@ function createBall() {
 	// Center the ball in the canvas
 	ballX = canvasWidth / 2;
 	ballY = canvasHeight / 2;
-
-	drawBall(ballX, ballY);
 }
 
 function moveBall() {
@@ -273,39 +295,45 @@ function moveBall() {
 	ballY += ballSpeed * ballYDirection;
 }
 
-function drawBall(_ballX, _ballY) {
+function drawBall() {
 	context.fillStyle = ballColor;
 	context.beginPath();
 	context.arc(ballX, ballY, ballRadius, 0, 2 * Math.PI);
 	context.fill();
 }
 
-function nextTick(onPostTickCallback) {
+function nextTick() {
 	// Runs a game ticks
 	intervalID = setTimeout(() => {
-		// Reset the board
+		// Check for winning condition
+		if (playerOneScore >= winningScore || playerTwoScore >= winningScore) {
+			// Reset the game
+			resetGame();
+
+			// Stop the game
+			return;
+		}
+
+		// Re-draw the board
 		clearBoard();
 
-		// Redraw paddles
+		// Update players coordinates
+		calculatePlayerMovement();
+
+		// Re-draw players
 		drawPaddles();
 
-		// Update ball position and draw it
+		// Update ball coordinates
 		moveBall();
-		drawBall(ballX, ballY);
 
 		// Check collisions
 		checkCollision();
 
-		// Run post tick callback
-		if (
-			onPostTickCallback != null &&
-			typeof onPostTickCallback === "function"
-		) {
-			onPostTickCallback();
-		}
+		// Re-draw ball
+		drawBall();
 
 		// Schedule next tick
-		nextTick(onPostTickCallback);
+		nextTick();
 	}, tickRateMs);
 }
 
@@ -330,14 +358,26 @@ function resetGame() {
 	};
 }
 
-function initGame(onPostTickCallback) {
+function initGame() {
 	// Attach key events for moving paddles
-	window.addEventListener("keydown", onKeyPressed);
-	window.addEventListener("keyup", onKeyReleased);
+	window.addEventListener("keydown", function (event) {
+		onKeyPressed(
+			event.code,
+			(player_one_active = true),
+			(player_two_active = true)
+		);
+	});
+	window.addEventListener("keyup", function (event) {
+		onKeyReleased(
+			event.code,
+			(player_one_active = true),
+			(player_two_active = true)
+		);
+	});
 
 	// Create the ball
 	createBall();
 
 	// Run first game tick
-	nextTick(onPostTickCallback);
+	nextTick();
 }
