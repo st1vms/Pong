@@ -6,12 +6,13 @@ const canvasHeight = gameCanvas.height;
 
 const canvasColor = "#0d1117";
 
-const winningScore = 10;
+const winningScore = 100;
 
 // Common player properties
 const paddleWidth = 10;
 const paddleHeight = 75;
 const paddleSpeed = 5;
+
 const paddleColor = "white";
 
 // Ball properties
@@ -302,7 +303,35 @@ function drawBall() {
 	context.fill();
 }
 
-function nextTick() {
+let prevBallX = ballX;
+let prevBallY = ballY;
+
+function playerAIMovement(player_one_active, player_two_active){
+	const slope = (ballY - prevBallY) / (ballX - prevBallX);
+
+	const predictionY = -slope * playerOnePaddle.x + ballY;
+
+	prevBallX = ballX;
+	prevBallY = ballY;
+	console.log(
+		ballXDirection,
+		predictionY,
+	);
+
+	// Predict ball trajectory y coordinate
+	if (player_one_active === false && ballXDirection < 0) {
+		const center = playerOnePaddle.y + playerOnePaddle.height / 2;
+		playerOneMovingDown = predictionY > center + paddleSpeed;
+		playerOneMovingUp = predictionY < center - paddleSpeed;
+	} else if (player_two_active === false && ballXDirection > 0) {
+		const center = playerTwoPaddle.y + playerTwoPaddle.height / 2;
+		playerTwoMovingDown = predictionY > center + paddleSpeed;
+		playerTwoMovingUp = predictionY < center - paddleSpeed;
+	}
+}
+
+function nextTick(player_one_active = true, player_two_active = true) {
+
 	// Runs a game ticks
 	intervalID = setTimeout(() => {
 		// Check for winning condition
@@ -317,6 +346,8 @@ function nextTick() {
 		// Re-draw the board
 		clearBoard();
 
+		playerAIMovement(player_one_active, player_two_active)
+	
 		// Update players coordinates
 		calculatePlayerMovement();
 
@@ -333,7 +364,10 @@ function nextTick() {
 		drawBall();
 
 		// Schedule next tick
-		nextTick();
+		nextTick(
+			(player_one_active = player_one_active),
+			(player_two_active = player_two_active)
+		);
 	}, tickRateMs);
 }
 
@@ -363,15 +397,15 @@ function initGame() {
 	window.addEventListener("keydown", function (event) {
 		onKeyPressed(
 			event.code,
-			(player_one_active = true),
-			(player_two_active = true)
+			(player_one_active = false),
+			(player_two_active = false)
 		);
 	});
 	window.addEventListener("keyup", function (event) {
 		onKeyReleased(
 			event.code,
-			(player_one_active = true),
-			(player_two_active = true)
+			(player_one_active = false),
+			(player_two_active = false)
 		);
 	});
 
@@ -379,5 +413,8 @@ function initGame() {
 	createBall();
 
 	// Run first game tick
-	nextTick();
+	nextTick(
+		(player_one_active = false),
+		(player_two_active = false)
+	);
 }
