@@ -9,7 +9,7 @@ const canvasColor = "#0d1117";
 // Common player properties
 const paddleWidth = 10;
 const paddleHeight = 75;
-const paddleSpeed = 7.5;
+const paddleSpeed = 5;
 const paddleColor = "white";
 
 // Ball properties
@@ -92,9 +92,9 @@ function onKeyPressed(event) {
 }
 
 function onKeyReleased(event) {
-	const keyPressed = event.keyCode;
+	const keyReleased = event.keyCode;
 
-	switch (keyPressed) {
+	switch (keyReleased) {
 		case playerOneUpKeyCode: {
 			playerOneMovingUp = false;
 			break;
@@ -280,7 +280,7 @@ function drawBall(_ballX, _ballY) {
 	context.fill();
 }
 
-function nextTick() {
+function nextTick(onPostTickCallback) {
 	// Runs a game ticks
 	intervalID = setTimeout(() => {
 		// Reset the board
@@ -296,8 +296,16 @@ function nextTick() {
 		// Check collisions
 		checkCollision();
 
+		// Run post tick callback
+		if (
+			onPostTickCallback != null &&
+			typeof onPostTickCallback === "function"
+		) {
+			onPostTickCallback();
+		}
+
 		// Schedule next tick
-		nextTick();
+		nextTick(onPostTickCallback);
 	}, tickRateMs);
 }
 
@@ -322,16 +330,14 @@ function resetGame() {
 	};
 }
 
-function initGame() {
+function initGame(onPostTickCallback) {
+	// Attach key events for moving paddles
+	window.addEventListener("keydown", onKeyPressed);
+	window.addEventListener("keyup", onKeyReleased);
+
 	// Create the ball
 	createBall();
 
 	// Run first game tick
-	nextTick();
+	nextTick(onPostTickCallback);
 }
-
-// Attach key events for moving paddles
-window.addEventListener("keydown", onKeyPressed);
-window.addEventListener("keyup", onKeyReleased);
-
-initGame();
