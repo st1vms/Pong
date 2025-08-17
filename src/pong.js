@@ -142,10 +142,12 @@ function checkCollision() {
 	// Upper and lower wall collisions
 	if (ballY <= ballRadius) {
 		ballYDirection *= -1;
+		ballY = ballRadius;
 	}
 
 	if (ballY >= canvasHeight - ballRadius) {
 		ballYDirection *= -1;
+		ballY = canvasHeight - ballRadius;
 	}
 
 	// Side wall collisions
@@ -191,7 +193,7 @@ function checkCollision() {
 			// Make sure it goes to the right (since it bounced from left paddle)
 			ballXDirection = Math.abs(ballXDirection);
 
-			if(ballSpeed + ballSpeedIncrease <= maxBallSpeed) {
+			if (ballSpeed + ballSpeedIncrease <= maxBallSpeed) {
 				ballSpeed += ballSpeedIncrease;
 			}
 		}
@@ -216,7 +218,7 @@ function checkCollision() {
 			// Make sure it goes to the left (since it bounced from right paddle)
 			ballXDirection = -Math.abs(ballXDirection);
 
-			if(ballSpeed + ballSpeedIncrease <= maxBallSpeed) {
+			if (ballSpeed + ballSpeedIncrease <= maxBallSpeed) {
 				ballSpeed += ballSpeedIncrease;
 			}
 		}
