@@ -23,6 +23,7 @@ const ballRadius = 7.5;
 const startingSpeed = 1;
 let ballSpeed = startingSpeed;
 let ballSpeedIncrease = 0.5;
+const maxBallSpeed = 5;
 
 // Ball starts centered
 let ballX = canvasWidth / 2;
@@ -190,7 +191,9 @@ function checkCollision() {
 			// Make sure it goes to the right (since it bounced from left paddle)
 			ballXDirection = Math.abs(ballXDirection);
 
-			ballSpeed += ballSpeedIncrease;
+			if(ballSpeed + ballSpeedIncrease <= maxBallSpeed) {
+				ballSpeed += ballSpeedIncrease;
+			}
 		}
 	}
 
@@ -213,7 +216,9 @@ function checkCollision() {
 			// Make sure it goes to the left (since it bounced from right paddle)
 			ballXDirection = -Math.abs(ballXDirection);
 
-			ballSpeed += ballSpeedIncrease;
+			if(ballSpeed + ballSpeedIncrease <= maxBallSpeed) {
+				ballSpeed += ballSpeedIncrease;
+			}
 		}
 	}
 }
@@ -306,17 +311,13 @@ function drawBall() {
 let prevBallX = ballX;
 let prevBallY = ballY;
 
-function playerAIMovement(player_one_active, player_two_active){
+function playerAIMovement(player_one_active, player_two_active) {
 	const slope = (ballY - prevBallY) / (ballX - prevBallX);
 
 	const predictionY = -slope * playerOnePaddle.x + ballY;
 
 	prevBallX = ballX;
 	prevBallY = ballY;
-	console.log(
-		ballXDirection,
-		predictionY,
-	);
 
 	// Predict ball trajectory y coordinate
 	if (player_one_active === false && ballXDirection < 0) {
@@ -331,7 +332,6 @@ function playerAIMovement(player_one_active, player_two_active){
 }
 
 function nextTick(player_one_active = true, player_two_active = true) {
-
 	// Runs a game ticks
 	intervalID = setTimeout(() => {
 		// Check for winning condition
@@ -346,8 +346,8 @@ function nextTick(player_one_active = true, player_two_active = true) {
 		// Re-draw the board
 		clearBoard();
 
-		playerAIMovement(player_one_active, player_two_active)
-	
+		playerAIMovement(player_one_active, player_two_active);
+
 		// Update players coordinates
 		calculatePlayerMovement();
 
@@ -413,8 +413,5 @@ function initGame() {
 	createBall();
 
 	// Run first game tick
-	nextTick(
-		(player_one_active = false),
-		(player_two_active = false)
-	);
+	nextTick((player_one_active = false), (player_two_active = false));
 }
