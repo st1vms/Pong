@@ -19,6 +19,7 @@ const ballRadius = 7.5;
 // Starting speed
 const startingSpeed = 1;
 let ballSpeed = startingSpeed;
+let ballSpeedIncrease = 0.5;
 
 // Ball starts centered
 let ballX = canvasWidth / 2;
@@ -57,36 +58,57 @@ const playerOneDownKeyCode = 83;
 const playerTwoUpKeyCode = 38;
 const playerTwoDownKeyCode = 40;
 
+let playerOneMovingUp = false;
+let playerOneMovingDown = false;
+
+let playerTwoMovingUp = false;
+let playerTwoMovingDown = false;
+
 // Used for ticks
 const tickRateMs = 10;
 let intervalID;
 
-function changeDirection(event) {
+function onKeyPressed(event) {
 	const keyPressed = event.keyCode;
 
 	switch (keyPressed) {
 		case playerOneUpKeyCode: {
-			if (playerOnePaddle.y > 0) {
-				playerOnePaddle.y -= paddleSpeed;
-			}
+			playerOneMovingUp = true;
 			break;
 		}
 		case playerOneDownKeyCode: {
-			if (playerOnePaddle.y < canvasHeight - playerOnePaddle.height) {
-				playerOnePaddle.y += paddleSpeed;
-			}
+			playerOneMovingDown = true;
 			break;
 		}
 		case playerTwoUpKeyCode: {
-			if (playerTwoPaddle.y > 0) {
-				playerTwoPaddle.y -= paddleSpeed;
-			}
+			playerTwoMovingUp = true;
 			break;
 		}
 		case playerTwoDownKeyCode: {
-			if (playerTwoPaddle.y < canvasHeight - playerTwoPaddle.height) {
-				playerTwoPaddle.y += paddleSpeed;
-			}
+			playerTwoMovingDown = true;
+			break;
+		}
+	}
+}
+
+function onKeyReleased(event) {
+	const keyPressed = event.keyCode;
+
+	switch (keyPressed) {
+		case playerOneUpKeyCode: {
+			playerOneMovingUp = false;
+			break;
+		}
+		case playerOneDownKeyCode: {
+			playerOneMovingDown = false;
+			break;
+		}
+		case playerTwoUpKeyCode: {
+			playerTwoMovingUp = false;
+			break;
+		}
+		case playerTwoDownKeyCode: {
+			playerTwoMovingDown = false;
 			break;
 		}
 	}
@@ -123,11 +145,29 @@ function checkCollision() {
 			ballY > playerOnePaddle.y &&
 			ballY < playerOnePaddle.y + playerOnePaddle.height
 		) {
-			// Prevents ball from clipping into paddle
+			// Prevents clipping
 			ballX = playerOnePaddle.x + playerOnePaddle.width + ballRadius;
 
-			ballXDirection *= -1;
-			ballSpeed += 0.25;
+			// Compute collision offset
+			let paddleCenter = playerOnePaddle.y + playerOnePaddle.height / 2;
+			let distanceFromCenter = ballY - paddleCenter;
+
+			// Normalize to range [-1, 1]
+			let normalized = distanceFromCenter / (playerOnePaddle.height / 2);
+
+			// Max bounce angle (radians), e.g. 60°
+			let maxBounce = Math.PI / 3;
+
+			// Compute angle
+			let bounceAngle = normalized * maxBounce;
+
+			ballXDirection = Math.cos(bounceAngle); // always positive
+			ballYDirection = Math.sin(bounceAngle);
+
+			// Make sure it goes to the right (since it bounced from left paddle)
+			ballXDirection = Math.abs(ballXDirection);
+
+			ballSpeed += ballSpeedIncrease;
 		}
 	}
 
@@ -136,11 +176,21 @@ function checkCollision() {
 			ballY > playerTwoPaddle.y &&
 			ballY < playerTwoPaddle.y + playerTwoPaddle.height
 		) {
-			// Prevents ball from clipping into paddle
 			ballX = playerTwoPaddle.x - ballRadius;
 
-			ballXDirection *= -1;
-			ballSpeed += 0.25;
+			let paddleCenter = playerTwoPaddle.y + playerTwoPaddle.height / 2;
+			let distanceFromCenter = ballY - paddleCenter;
+			let normalized = distanceFromCenter / (playerTwoPaddle.height / 2);
+			let maxBounce = Math.PI / 3;
+			let bounceAngle = normalized * maxBounce;
+
+			ballXDirection = Math.cos(bounceAngle);
+			ballYDirection = Math.sin(bounceAngle);
+
+			// Make sure it goes to the left (since it bounced from right paddle)
+			ballXDirection = -Math.abs(ballXDirection);
+
+			ballSpeed += ballSpeedIncrease;
 		}
 	}
 }
@@ -151,6 +201,30 @@ function clearBoard() {
 }
 
 function drawPaddles() {
+	// Calculate player one movement
+	if (playerOneMovingUp && playerOnePaddle.y > 0) {
+		playerOnePaddle.y -= paddleSpeed;
+	}
+
+	if (
+		playerOneMovingDown &&
+		playerOnePaddle.y < canvasHeight - playerOnePaddle.height
+	) {
+		playerOnePaddle.y += paddleSpeed;
+	}
+
+	// Calculate player two movement
+	if (playerTwoMovingUp && playerTwoPaddle.y > 0) {
+		playerTwoPaddle.y -= paddleSpeed;
+	}
+
+	if (
+		playerTwoMovingDown &&
+		playerTwoPaddle.y < canvasHeight - playerTwoPaddle.height
+	) {
+		playerTwoPaddle.y += paddleSpeed;
+	}
+
 	// Draw player one
 	context.fillStyle = paddleColor;
 	context.fillRect(
@@ -257,6 +331,7 @@ function initGame() {
 }
 
 // Attach key events for moving paddles
-window.addEventListener("keydown", changeDirection);
+window.addEventListener("keydown", onKeyPressed);
+window.addEventListener("keyup", onKeyReleased);
 
 initGame();
