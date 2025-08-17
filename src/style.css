@@ -1,0 +1,10 @@
+#game-container {
+    display: flex;
+    flex-direction: column;
+}
+
+#game-score {
+    font-size: 3rem;
+    font-weight: bold1;
+    align-self: center
+}

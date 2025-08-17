@@ -1,4 +1,9 @@
+// Set to false to enable AI to play instead
+const PLAYER_ONE_PLAYS = false;
+const PLAYER_TWO_PLAYS = false;
+
 const gameCanvas = document.querySelector("#game-canvas");
+const gameScore = document.querySelector("#game-score");
 const context = gameCanvas.getContext("2d");
 
 const canvasWidth = gameCanvas.width;
@@ -6,7 +11,7 @@ const canvasHeight = gameCanvas.height;
 
 const canvasColor = "#0d1117";
 
-const winningScore = 100;
+const winningScore = 10;
 
 // Common player properties
 const paddleWidth = 10;
@@ -20,10 +25,10 @@ const ballColor = "white";
 const ballRadius = 7.5;
 
 // Starting speed
-const startingSpeed = 1;
-let ballSpeed = startingSpeed;
+const startingBallSpeed = 1;
+let ballSpeed = startingBallSpeed;
 let ballSpeedIncrease = 0.5;
-const maxBallSpeed = 5;
+const maxBallSpeed = 10;
 
 // Ball starts centered
 let ballX = canvasWidth / 2;
@@ -72,32 +77,28 @@ let playerTwoMovingDown = false;
 const tickRateMs = 10;
 let intervalID;
 
-function onKeyPressed(
-	keyCode,
-	player_one_active = true,
-	player_two_active = true
-) {
+function onKeyPressed(keyCode) {
 	switch (keyCode) {
 		case playerOneUpKeyCode: {
-			if (player_one_active) {
+			if (PLAYER_ONE_PLAYS) {
 				playerOneMovingUp = true;
 			}
 			break;
 		}
 		case playerOneDownKeyCode: {
-			if (player_one_active) {
+			if (PLAYER_ONE_PLAYS) {
 				playerOneMovingDown = true;
 			}
 			break;
 		}
 		case playerTwoUpKeyCode: {
-			if (player_two_active) {
+			if (PLAYER_TWO_PLAYS) {
 				playerTwoMovingUp = true;
 			}
 			break;
 		}
 		case playerTwoDownKeyCode: {
-			if (player_two_active) {
+			if (PLAYER_TWO_PLAYS) {
 				playerTwoMovingDown = true;
 			}
 			break;
@@ -105,32 +106,28 @@ function onKeyPressed(
 	}
 }
 
-function onKeyReleased(
-	keyCode,
-	player_one_active = true,
-	player_two_active = true
-) {
+function onKeyReleased(keyCode) {
 	switch (keyCode) {
 		case playerOneUpKeyCode: {
-			if (player_one_active) {
+			if (PLAYER_ONE_PLAYS) {
 				playerOneMovingUp = false;
 			}
 			break;
 		}
 		case playerOneDownKeyCode: {
-			if (player_one_active) {
+			if (PLAYER_ONE_PLAYS) {
 				playerOneMovingDown = false;
 			}
 			break;
 		}
 		case playerTwoUpKeyCode: {
-			if (player_two_active) {
+			if (PLAYER_TWO_PLAYS) {
 				playerTwoMovingUp = false;
 			}
 			break;
 		}
 		case playerTwoDownKeyCode: {
-			if (player_two_active) {
+			if (PLAYER_TWO_PLAYS) {
 				playerTwoMovingDown = false;
 			}
 			break;
@@ -154,6 +151,7 @@ function checkCollision() {
 	if (ballX <= 0) {
 		// Player two scored
 		playerTwoScore += 1;
+		updateScore();
 		createBall();
 		return;
 	}
@@ -161,6 +159,7 @@ function checkCollision() {
 	if (ballX >= canvasWidth) {
 		// Player one scored
 		playerOneScore += 1;
+		updateScore();
 		createBall();
 		return;
 	}
@@ -256,6 +255,10 @@ function calculatePlayerMovement() {
 	}
 }
 
+function updateScore() {
+	gameScore.textContent = `${playerOneScore} - ${playerTwoScore}`;
+}
+
 function drawPaddles() {
 	// Draw player one
 	context.fillStyle = paddleColor;
@@ -278,13 +281,21 @@ function drawPaddles() {
 
 function createBall() {
 	// Reset starting speed
-	ballSpeed = startingSpeed;
+	ballSpeed = startingBallSpeed;
 
-	// Choose a random starting direction
-	if (Math.round(Math.random()) == 1) {
-		ballXDirection = 1; // Move right
+	if (playerOneScore == playerTwoScore) {
+		// Choose a random x starting direction
+		if (Math.round(Math.random()) == 1) {
+			ballXDirection = 1; // Move right
+		} else {
+			ballXDirection = -1; // Move left
+		}
+	} else if (playerOneScore > playerTwoScore) {
+		// Move left
+		ballXDirection = -1;
 	} else {
-		ballXDirection = -1; // Move left
+		// Move right
+		ballXDirection = 1;
 	}
 
 	if (Math.round(Math.random()) == 1) {
@@ -313,7 +324,7 @@ function drawBall() {
 let prevBallX = ballX;
 let prevBallY = ballY;
 
-function playerAIMovement(player_one_active, player_two_active) {
+function playerAIMovement() {
 	const slope = (ballY - prevBallY) / (ballX - prevBallX);
 
 	const predictionY = -slope * playerOnePaddle.x + ballY;
@@ -322,18 +333,18 @@ function playerAIMovement(player_one_active, player_two_active) {
 	prevBallY = ballY;
 
 	// Predict ball trajectory y coordinate
-	if (player_one_active === false && ballXDirection < 0) {
+	if (PLAYER_ONE_PLAYS === false && ballXDirection < 0) {
 		const center = playerOnePaddle.y + playerOnePaddle.height / 2;
 		playerOneMovingDown = predictionY > center + paddleSpeed;
 		playerOneMovingUp = predictionY < center - paddleSpeed;
-	} else if (player_two_active === false && ballXDirection > 0) {
+	} else if (PLAYER_TWO_PLAYS === false && ballXDirection > 0) {
 		const center = playerTwoPaddle.y + playerTwoPaddle.height / 2;
 		playerTwoMovingDown = predictionY > center + paddleSpeed;
 		playerTwoMovingUp = predictionY < center - paddleSpeed;
 	}
 }
 
-function nextTick(player_one_active = true, player_two_active = true) {
+function nextTick() {
 	// Runs a game ticks
 	intervalID = setTimeout(() => {
 		// Check for winning condition
@@ -348,7 +359,7 @@ function nextTick(player_one_active = true, player_two_active = true) {
 		// Re-draw the board
 		clearBoard();
 
-		playerAIMovement(player_one_active, player_two_active);
+		playerAIMovement();
 
 		// Update players coordinates
 		calculatePlayerMovement();
@@ -366,10 +377,7 @@ function nextTick(player_one_active = true, player_two_active = true) {
 		drawBall();
 
 		// Schedule next tick
-		nextTick(
-			(player_one_active = player_one_active),
-			(player_two_active = player_two_active)
-		);
+		nextTick();
 	}, tickRateMs);
 }
 
@@ -397,23 +405,15 @@ function resetGame() {
 function initGame() {
 	// Attach key events for moving paddles
 	window.addEventListener("keydown", function (event) {
-		onKeyPressed(
-			event.code,
-			(player_one_active = false),
-			(player_two_active = false)
-		);
+		onKeyPressed(event.code);
 	});
 	window.addEventListener("keyup", function (event) {
-		onKeyReleased(
-			event.code,
-			(player_one_active = false),
-			(player_two_active = false)
-		);
+		onKeyReleased(event.code);
 	});
 
 	// Create the ball
 	createBall();
 
 	// Run first game tick
-	nextTick((player_one_active = false), (player_two_active = false));
+	nextTick();
 }
