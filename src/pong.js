@@ -280,33 +280,25 @@ function drawPaddles() {
 }
 
 function createBall() {
-	// Reset starting speed
-	ballSpeed = startingBallSpeed;
+    ballSpeed = startingBallSpeed;
 
-	if (playerOneScore == playerTwoScore) {
-		// Choose a random x starting direction
-		if (Math.round(Math.random()) == 1) {
-			ballXDirection = 1; // Move right
-		} else {
-			ballXDirection = -1; // Move left
-		}
-	} else if (playerOneScore > playerTwoScore) {
-		// Move left
-		ballXDirection = -1;
-	} else {
-		// Move right
-		ballXDirection = 1;
-	}
+    // Random angle between -45° and 45° or 135° and 225° depending on who serves
+    let angle;
+    if (playerOneScore == playerTwoScore) {
+        angle = (Math.random() * Math.PI / 2) - Math.PI / 4; // -45° to +45°
+        if (Math.round(Math.random()) == 0) angle += Math.PI; // flip X direction
+    } else if (playerOneScore > playerTwoScore) {
+        angle = Math.PI - (Math.random() * Math.PI / 2 - Math.PI / 4); // towards left
+    } else {
+        angle = Math.random() * Math.PI / 2 - Math.PI / 4; // towards right
+    }
 
-	if (Math.round(Math.random()) == 1) {
-		ballYDirection = 1; // Move down
-	} else {
-		ballYDirection = -1; // Move up
-	}
+    // Convert angle to X and Y components
+    ballXDirection = Math.cos(angle);
+    ballYDirection = Math.sin(angle);
 
-	// Center the ball in the canvas
-	ballX = canvasWidth / 2;
-	ballY = canvasHeight / 2;
+    ballX = canvasWidth / 2;
+    ballY = canvasHeight / 2;
 }
 
 function moveBall() {
